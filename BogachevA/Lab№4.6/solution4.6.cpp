@@ -12,10 +12,10 @@ enum class Month {
     January = 1, February, March, April, May,
     June, July, August, September, October, November, December
 };
-int monthToInt(Month m) {
+inline int monthToInt(Month m) {
     return static_cast<int>(m);
 }
-Month intToMonth(int m) {
+inline Month intToMonth(int m) {
     return static_cast<Month>(m);
 }
 class Date {
@@ -68,7 +68,7 @@ private:
     Date date;
     unsigned int boxOffice;
 public:
-    explicit Movie(string t = "Unknown", string d = "Unknown", string s = "Unknown", string c = "Unknown", Date date_= Date(), unsigned int boxOffice_ = 0) :
+    explicit Movie(string t = "Unknown", string d = "Unknown", string s = "Unknown", string c = "Unknown", Date date_ = Date(), unsigned int boxOffice_ = 0) :
         title(t), director(d), screenwriter(s), composer(c), date(date_), boxOffice(boxOffice_) {
     }
     ~Movie() = default;
@@ -174,6 +174,28 @@ private:
         movies = newMovies;
         capacity = newCap;
     }
+    size_t findInsertPosition(const Movie& m) const {
+        size_t left = 0, right = size;
+        while (left < right) {
+            size_t mid = left + (right - left) / 2;
+            const Movie& cur = movies[mid];
+            if (m.getTitle() < cur.getTitle() ||
+                (m.getTitle() == cur.getTitle() && m.getYear() < cur.getYear())) {
+                right = mid;
+            }
+            else {
+                left = mid + 1;
+            }
+        }
+        return left;
+    }
+    bool exists(const string& title, int year) const {
+        for (size_t i = 0; i < size; ++i) {
+            if (movies[i].getTitle() == title && movies[i].getYear() == year)
+                return true;
+        }
+        return false;
+    }
     void merge(int left, int mid, int right, Movie* temp) {
         int i = left;
         int j = mid + 1;
@@ -260,17 +282,38 @@ public:
         return *this;
     }
     void addMovie(const Movie& m) {
+        if (exists(m.getTitle(), m.getYear())) {
+            throw std::runtime_error("Movie with this title and year already exists");
+        }
         expandCapacity();
-        movies[size++] = m;
-        sortMovies();
+        size_t pos = findInsertPosition(m);
+        for (size_t i = size; i > pos; --i) {
+            movies[i] = movies[i - 1];
+        }
+        movies[pos] = m;
+        ++size;
     }
     bool editMovie(const string& title, int year, const Movie& newData) {
         int idx = findIndex(title, year);
         if (idx == -1) {
             return false;
         }
-        movies[idx] = newData;
-        sortMovies();
+        if (newData.getTitle() != title || newData.getYear() != year) {
+            if (exists(newData.getTitle(), newData.getYear())) {
+                return false;   
+            }
+        }
+        for (size_t i = idx; i < size - 1; ++i) {
+            movies[i] = movies[i + 1];
+        }
+        --size;
+        expandCapacity(); 
+        size_t pos = findInsertPosition(newData);
+        for (size_t i = size; i > pos; --i) {
+            movies[i] = movies[i - 1];
+        }
+        movies[pos] = newData;
+        ++size;
         return true;
     }
     const Movie* findMovie(const string& title, int year) const {
@@ -459,7 +502,7 @@ public:
             movies = new Movie[capacity];
         }
         catch (...) {
-            throw std::runtime_error("Not enough memory");
+            throw std::runtime_error("not enough memory");
         }
         for (size_t i = 0; i < newSize; ++i) {
             string title, director, screenwriter, composer;
@@ -479,7 +522,7 @@ public:
             }
             catch (...) {
                 delete[] movies;
-                throw std::runtime_error("Fatal error");
+                throw std::runtime_error("fatal error");
             }
         }
         sortMovies();
@@ -508,7 +551,7 @@ int main() {
     filmLibrary ZolotayaMalina;
     int choice;
     do {
-        cout << "Menu" << endl
+        cout << "Menu"
             << "1.Add movie" << endl
             << "2. Change movie data" << endl
             << "3. Find movie by year and title" << endl
@@ -655,7 +698,7 @@ int main() {
             }
         }
         catch (const std::exception& e) {
-            cout << "Error: " << e.what() << endl;
+            cout << "Error: " << e.what() << "\n";
         }
     } while (choice != 0);
     return 0;
