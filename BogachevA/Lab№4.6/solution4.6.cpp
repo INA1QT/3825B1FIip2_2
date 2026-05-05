@@ -300,14 +300,14 @@ public:
         }
         if (newData.getTitle() != title || newData.getYear() != year) {
             if (exists(newData.getTitle(), newData.getYear())) {
-                return false;   
+                return false;
             }
         }
         for (size_t i = idx; i < size - 1; ++i) {
             movies[i] = movies[i + 1];
         }
         --size;
-        expandCapacity(); 
+        expandCapacity();
         size_t pos = findInsertPosition(newData);
         for (size_t i = size; i > pos; --i) {
             movies[i] = movies[i - 1];
@@ -698,7 +698,7 @@ int main() {
             }
         }
         catch (const std::exception& e) {
-            cout << "Error: " << e.what() << "\n";
+            cout << "Error: " << e.what() << endl;
         }
     } while (choice != 0);
     return 0;
